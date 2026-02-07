@@ -32,9 +32,6 @@ rm -rf out
 echo "Installing dependencies..."
 pnpm install
 
-# Build the Next.js application first
-echo "Building Next.js application..."
-pnpm run build
 
 # Set environment variables for the build
 echo "Setting up build environment..."

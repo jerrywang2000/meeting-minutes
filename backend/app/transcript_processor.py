@@ -192,6 +192,7 @@ class TranscriptProcessor:
                         ---
                         {custom_prompt}
                         ---
+                        请用中文总结.
                         Make sure the output is only the JSON data.
                         """,
                     )
@@ -248,7 +249,7 @@ class TranscriptProcessor:
         ---
         {custom_prompt}
         ---
-
+        请用中文总结.
         Make sure the output is only the JSON data.
     
         ''',

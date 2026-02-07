@@ -124,12 +124,12 @@ export default function Home() {
       const result = await recoverMeeting(meetingId);
 
       if (result.success) {
-        toast.success('Meeting recovered successfully!', {
+        toast.success('会议恢复成功！', {
           description: result.audioRecoveryStatus?.status === 'success'
-            ? 'Transcripts and audio recovered'
-            : 'Transcripts recovered (no audio available)',
+            ? '已恢复文字记录和音频'
+            : '已恢复文字记录（无可用音频）',
           action: result.meetingId ? {
-            label: 'View Meeting',
+            label: '查看会议',
             onClick: () => {
               router.push(`/meeting-details?id=${result.meetingId}`);
             }
@@ -153,8 +153,8 @@ export default function Home() {
         }
       }
     } catch (error) {
-      toast.error('Failed to recover meeting', {
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
+      toast.error('会议恢复失败', {
+        description: error instanceof Error ? error.message : '发生未知错误',
       });
       throw error;
     }

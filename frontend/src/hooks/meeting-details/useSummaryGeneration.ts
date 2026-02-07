@@ -43,15 +43,15 @@ export function useSummaryGeneration({
   const getSummaryStatusMessage = useCallback((status: SummaryStatus) => {
     switch (status) {
       case 'processing':
-        return 'Processing transcript...';
+        return '正在处理文字记录...';
       case 'summarizing':
-        return 'Generating summary...';
+        return '正在生成纪要...';
       case 'regenerating':
-        return 'Regenerating summary...';
+        return '正在重新生成纪要...';
       case 'completed':
-        return 'Summary completed';
+        return '纪要已完成';
       case 'error':
-        return 'Error generating summary';
+        return '生成纪要时出错';
       default:
         return '';
     }
@@ -98,8 +98,8 @@ export function useSummaryGeneration({
       }
 
       // Show toast notification for generation start
-      toast.info(`${isRegeneration ? 'Regenerating' : 'Generating'} summary...`, {
-        description: `Using ${modelConfig.provider}/${modelConfig.model}`,
+      toast.info(`${isRegeneration ? '正在重新生成' : '正在生成'}纪要...`, {
+        description: `使用 ${modelConfig.provider}/${modelConfig.model}`,
         duration: 3000,
       });
 
@@ -124,7 +124,7 @@ export function useSummaryGeneration({
 
         // Handle cancellation
         if (pollingResult.status === 'cancelled') {
-          console.log('Summary generation was cancelled');
+          console.log('纪要生成已取消');
 
           // Reload summary from database (backend has already restored from backup)
           try {
@@ -133,14 +133,14 @@ export function useSummaryGeneration({
             }) as any;
 
             if (existingSummary?.data) {
-              console.log('Restored previous summary after cancellation');
+              console.log('取消后恢复了先前的纪要');
               setAiSummary(existingSummary.data);
               setSummaryStatus('completed');
             } else {
               setSummaryStatus('idle');
             }
           } catch (error) {
-            console.error('Failed to reload summary after cancellation:', error);
+            console.error('取消后重新加载纪要失败:', error);
             setSummaryStatus('idle');
           }
 
@@ -151,7 +151,7 @@ export function useSummaryGeneration({
         // Handle errors
         if (pollingResult.status === 'error' || pollingResult.status === 'failed') {
           console.error('Backend returned error:', pollingResult.error);
-          const errorMessage = pollingResult.error || `Summary ${isRegeneration ? 'regeneration' : 'generation'} failed`;
+          const errorMessage = pollingResult.error || `纪要${isRegeneration ? '重新生成' : '生成'}失败`;
 
           // If this was a regeneration, try to restore previous summary from database
           if (isRegeneration) {
@@ -161,14 +161,14 @@ export function useSummaryGeneration({
               }) as any;
 
               if (existingSummary?.data) {
-                console.log('Restored previous summary after regeneration failure');
+                console.log('重新生成失败后恢复了先前的纪要');
                 setAiSummary(existingSummary.data);
                 setSummaryStatus('completed');
                 setSummaryError(null);
 
                 // Show error toast with restoration message
-                toast.error(`Failed to regenerate summary`, {
-                  description: `${errorMessage}. Your previous summary has been restored.`,
+                toast.error(`重新生成纪要失败`, {
+                  description: `${errorMessage}。您先前的纪要已恢复。`,
                 });
 
                 await Analytics.trackSummaryGenerationCompleted(
@@ -181,7 +181,7 @@ export function useSummaryGeneration({
                 return;
               }
             } catch (error) {
-              console.error('Failed to reload summary after error:', error);
+              console.error('出错后重新加载纪要失败:', error);
             }
           }
 
@@ -195,9 +195,9 @@ export function useSummaryGeneration({
             errorMessage.toLowerCase().includes('model') && errorMessage.toLowerCase().includes('required');
 
           // Show error toast
-          toast.error(`Failed to ${isRegeneration ? 'regenerate' : 'generate'} summary`, {
+          toast.error(`无法${isRegeneration ? '重新生成' : '生成'}纪要`, {
             description: errorMessage.includes('Connection refused')
-              ? 'Could not connect to LLM service. Please ensure Ollama or your configured LLM provider is running.'
+              ? '无法连接到LLM服务。请确保Ollama或您配置的LLM提供商正在运行。'
               : errorMessage,
           });
 
@@ -234,8 +234,8 @@ export function useSummaryGeneration({
             setSummaryStatus('completed');
 
             // Show success toast
-            toast.success('Summary generated successfully!', {
-              description: 'Your meeting summary is ready',
+            toast.success('纪要生成成功！', {
+              description: '您的会议纪要已准备就绪',
               duration: 4000,
             });
 
@@ -256,8 +256,8 @@ export function useSummaryGeneration({
           const allEmpty = summarySections.every(([, section]) => !(section as any).blocks || (section as any).blocks.length === 0);
 
           if (allEmpty) {
-            console.error('Summary completed but all sections empty');
-            setSummaryError('Summary generation completed but returned empty content.');
+            console.error('纪要已完成，但所有部分均为空');
+            setSummaryError('纪要生成完成，但返回内容为空。');
             setSummaryStatus('error');
 
             await Analytics.trackSummaryGenerationCompleted(
@@ -300,7 +300,7 @@ export function useSummaryGeneration({
                 }
               }
             } catch (error) {
-              console.warn(`Error processing section ${key}:`, error);
+              console.warn(`处理部分 ${key} 时出错:`, error);
             }
           }
 
@@ -308,8 +308,8 @@ export function useSummaryGeneration({
           setSummaryStatus('completed');
 
           // Show success toast
-          toast.success('Summary generated successfully!', {
-            description: 'Your meeting summary is ready',
+          toast.success('纪要生成成功！', {
+            description: '您的会议纪要已准备就绪',
             duration: 4000,
           });
 
@@ -326,12 +326,12 @@ export function useSummaryGeneration({
       });
     } catch (error) {
       console.error(`Failed to ${isRegeneration ? 'regenerate' : 'generate'} summary:`, error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : '未知错误';
       setSummaryError(errorMessage);
       setSummaryStatus('error');
       // Note: We don't clear the summary here because the backend has already restored from backup
 
-      toast.error(`Failed to ${isRegeneration ? 'regenerate' : 'generate'} summary`, {
+      toast.error(`无法${isRegeneration ? '重新生成' : '生成'}纪要`, {
         description: errorMessage,
       });
 
@@ -357,7 +357,7 @@ export function useSummaryGeneration({
   // Helper function to fetch ALL transcripts for summary generation
   const fetchAllTranscripts = useCallback(async (meetingId: string): Promise<Transcript[]> => {
     try {
-      console.log('📊 Fetching all transcripts for meeting:', meetingId);
+      console.log('📊 正在为会议获取所有文字记录:', meetingId);
 
       // First, get total count by fetching first page
       const firstPage = await invokeTauri('api_get_meeting_transcripts', {
@@ -367,7 +367,7 @@ export function useSummaryGeneration({
       }) as { transcripts: Transcript[]; total_count: number; has_more: boolean };
 
       const totalCount = firstPage.total_count;
-      console.log(`📊 Total transcripts in database: ${totalCount}`);
+      console.log(`📊 数据库中总文字记录数: ${totalCount}`);
 
       if (totalCount === 0) {
         return [];
@@ -380,11 +380,11 @@ export function useSummaryGeneration({
         offset: 0,
       }) as { transcripts: Transcript[]; total_count: number; has_more: boolean };
 
-      console.log(`✅ Fetched ${allData.transcripts.length} transcripts from database`);
+      console.log(`✅ 从数据库获取了 ${allData.transcripts.length} 条文字记录`);
       return allData.transcripts;
     } catch (error) {
-      console.error('❌ Error fetching all transcripts:', error);
-      toast.error('Failed to fetch transcripts for summary generation');
+      console.error('❌ 获取所有文字记录时出错:', error);
+      toast.error('获取用于生成纪要的文字记录失败');
       return [];
     }
   }, []);
@@ -393,17 +393,17 @@ export function useSummaryGeneration({
   const handleGenerateSummary = useCallback(async (customPrompt: string = '') => {
     // Check if model config is still loading
     if (isModelConfigLoading) {
-      console.log('⏳ Model configuration is still loading, please wait...');
-      toast.info('Loading model configuration, please wait...');
+      console.log('⏳ 模型配置仍在加载中，请稍候...');
+      toast.info('正在加载模型配置，请稍候...');
       return;
     }
 
     // CHANGE: Fetch ALL transcripts from database, not from pagination state
-    console.log('📊 Fetching all transcripts for summary generation...');
+    console.log('📊 正在为纪要生成获取所有文字记录...');
     const allTranscripts = await fetchAllTranscripts(meeting.id);
 
     if (!allTranscripts.length) {
-      const error_msg = 'No transcripts available for summary';
+      const error_msg = '没有可用于生成纪要的文字记录';
       console.log(error_msg);
       toast.error(error_msg);
       return;
@@ -600,8 +600,8 @@ export function useSummaryGeneration({
     setSummaryError(null);
 
     // Show toast notification
-    toast.info('Summary generation stopped', {
-      description: 'You can generate a new summary anytime',
+    toast.info('纪要生成已停止', {
+      description: '您可以随时生成新的纪要',
       duration: 3000,
     });
   }, [meeting.id, stopSummaryPolling]);
