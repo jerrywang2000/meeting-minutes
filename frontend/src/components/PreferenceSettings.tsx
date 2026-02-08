@@ -162,7 +162,7 @@ export function PreferenceSettings() {
       <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">数据存储位置</h3>
         <p className="text-sm text-gray-600 mb-6">
-          查看和访问 Meetily 存储数据的位置
+          查看和访问 100% 智能会议助手 存储数据的位置
         </p>
 
         <div className="space-y-4">
