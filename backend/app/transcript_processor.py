@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import List, Tuple, Literal
+from pydantic import BaseModel, Field
+from typing import List, Tuple, Literal, Optional
 from pydantic_ai import Agent
 from pydantic_ai.models.anthropic import AnthropicModel
 from pydantic_ai.models.groq import GroqModel
@@ -51,29 +51,33 @@ class Block(BaseModel):
 
 class Section(BaseModel):
     """Represents a section in the meeting summary"""
-    title: str
-    blocks: List[Block]
+    title: str = ""
+    blocks: List[Block] = []
 
 class MeetingNotes(BaseModel):
     """Represents the meeting notes"""
-    meeting_name: str
-    sections: List[Section]
+    sections: List[Section] = []
 
 class People(BaseModel):
     """Represents the people in the meeting. Always have this part in the output. Title - Person Name (Role, Details)"""
-    title: str
-    blocks: List[Block]
+    title: str = "People"
+    blocks: List[Block] = []
+
+from pydantic import BaseModel, Field, ConfigDict
+# ... (imports)
 
 class SummaryResponse(BaseModel):
     """Represents the meeting summary response based on a section of the transcript"""
-    MeetingName : str
-    People : People
-    SessionSummary : Section
-    CriticalDeadlines: Section
-    KeyItemsDecisions: Section
-    ImmediateActionItems: Section
-    NextSteps: Section
-    MeetingNotes: MeetingNotes
+    model_config = ConfigDict(populate_by_name=True, from_attributes=True)
+    
+    meeting_name : Optional[str] = Field(default=None, alias="MeetingName")
+    people: People = Field(default_factory=lambda: People(title="People"), alias="People")
+    session_summary: Section = Field(default_factory=lambda: Section(title="Session Summary"), alias="SessionSummary")
+    critical_deadlines: Section = Field(default_factory=lambda: Section(title="Critical Deadlines"), alias="CriticalDeadlines")
+    key_items_decisions: Section = Field(default_factory=lambda: Section(title="Key Items & Decisions"), alias="KeyItemsDecisions")
+    immediate_action_items: Section = Field(default_factory=lambda: Section(title="Immediate Action Items"), alias="ImmediateActionItems")
+    next_steps: Section = Field(default_factory=lambda: Section(title="Next Steps"), alias="NextSteps")
+    meeting_notes: MeetingNotes = Field(default_factory=MeetingNotes, alias="MeetingNotes")
 
 # --- Main Class Used by main.py ---
 

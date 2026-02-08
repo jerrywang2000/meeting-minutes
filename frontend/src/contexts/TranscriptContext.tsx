@@ -7,6 +7,9 @@ import { useRecordingState } from './RecordingStateContext';
 import { transcriptService } from '@/services/transcriptService';
 import { recordingService } from '@/services/recordingService';
 import { indexedDBService } from '@/services/indexedDBService';
+import { configService } from '@/services/configService';
+import { SummaryResponse, summaryService } from '@/services/summaryService';
+import { useConfig } from './ConfigContext';
 
 interface TranscriptContextType {
   transcripts: Transcript[];
@@ -20,6 +23,8 @@ interface TranscriptContextType {
   clearTranscripts: () => void;
   currentMeetingId: string | null;
   markMeetingAsSaved: () => Promise<void>;
+  incrementalSummary: SummaryResponse | null;
+  updateIncrementalSummary: (summary: SummaryResponse) => void;
 }
 
 const TranscriptContext = createContext<TranscriptContextType | undefined>(undefined);
@@ -28,16 +33,42 @@ export function TranscriptProvider({ children }: { children: ReactNode }) {
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [meetingTitle, setMeetingTitle] = useState('+ New Call');
   const [currentMeetingId, setCurrentMeetingId] = useState<string | null>(null);
+  const currentMeetingIdRef = useRef<string | null>(null);
+  const [incrementalSummary, setIncrementalSummary] = useState<SummaryResponse | null>(null);
+
+  // Debug summary state changes
+  useEffect(() => {
+    if (incrementalSummary) {
+      console.log('[Summary State] 💎 Summary updated in Context:', {
+        hasPeople: incrementalSummary.people?.blocks?.length > 0,
+        hasSummary: incrementalSummary.session_summary?.blocks?.length > 0,
+        blocksCount: incrementalSummary.session_summary?.blocks?.length
+      });
+    }
+  }, [incrementalSummary]);
+
+  // Sync state to ref for access in async callbacks
+  useEffect(() => {
+    currentMeetingIdRef.current = currentMeetingId;
+  }, [currentMeetingId]);
 
   // Recording state context - provides backend-synced state
   const recordingState = useRecordingState();
+  const { modelConfig } = useConfig();
 
   // Refs for transcript management
   const transcriptsRef = useRef<Transcript[]>(transcripts);
   const isUserAtBottomRef = useRef<boolean>(true);
   const transcriptContainerRef = useRef<HTMLDivElement>(null);
   const finalFlushRef = useRef<(() => void) | null>(null);
+  const summaryStartedRef = useRef<boolean>(false);
+  const summarySessionActiveRef = useRef<boolean>(false);
+  const pendingChunksRef = useRef<string[]>([]);
 
+  const updateIncrementalSummary = useCallback((summary: SummaryResponse) => {
+    setIncrementalSummary(summary);
+  }, []);
+  
   // Keep ref updated with current transcripts
   useEffect(() => {
     transcriptsRef.current = transcripts;
@@ -85,45 +116,85 @@ export function TranscriptProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let unlistenRecordingStarted: (() => void) | undefined;
     let unlistenRecordingStopped: (() => void) | undefined;
+    let isEffectMounted = true;
 
     const setupRecordingListeners = async () => {
       try {
         // Initialize IndexedDB
         await indexedDBService.init();
+        if (!isEffectMounted) return;
 
         // Listen for recording-started event
         unlistenRecordingStarted = await recordingService.onRecordingStarted(async () => {
+          if (summaryStartedRef.current) return; // Prevent double trigger
+          
           try {
-            // Generate unique meeting ID
-            const meetingId = `meeting-${Date.now()}`;
+            // Generate meeting ID ONCE
+            const timestamp = Date.now();
+            const meetingId = `meeting-${timestamp}`;
+            console.log('[Recording] 🟢 START EVENT. Generated ID:', meetingId);
+            
+            // LOCK the ID in refs and state immediately
+            currentMeetingIdRef.current = meetingId;
             setCurrentMeetingId(meetingId);
-
-            // Store in sessionStorage as fallback for markMeetingAsSaved
+            summaryStartedRef.current = true; // Mark as starting
+            
+            // Store in sessionStorage as fallback
             sessionStorage.setItem('indexeddb_current_meeting_id', meetingId);
-            console.log('[Recording Started] 💾 IndexedDB meeting ID stored:', meetingId);
 
             // Get meeting name
             const meetingName = await recordingService.getRecordingMeetingName();
+            const effectiveTitle = meetingName || `Meeting ${new Date(timestamp).toISOString().slice(0, 19).replace('T', '_').replace(/:/g, '-')}`;
 
-            // Use a better fallback that matches the backend's naming pattern
-            const effectiveTitle = meetingName || `Meeting ${new Date().toISOString().slice(0, 19).replace('T', '_').replace(/:/g, '-')}`;
-
-            // Initialize meeting metadata in IndexedDB
+            // Initialize IndexedDB
             await indexedDBService.saveMeetingMetadata({
               meetingId,
               title: effectiveTitle,
-              startTime: Date.now(),
-              lastUpdated: Date.now(),
+              startTime: timestamp,
+              lastUpdated: timestamp,
               transcriptCount: 0,
               savedToSQLite: false,
-              folderPath: undefined // Will update shortly
+              folderPath: undefined
             });
 
-            // Synchronize meeting title to state (fixes tray stop title issue)
             setMeetingTitle(effectiveTitle);
 
-            // Fetch folder path from backend and update metadata
-            // This ensures folder path is persisted even if app crashes
+            // --- START INCREMENTAL SUMMARY SESSION ---
+            summarySessionActiveRef.current = false;
+            pendingChunksRef.current = [];
+            
+            try {
+              const activeConfig = await configService.getModelConfig();
+              const provider = activeConfig?.provider || modelConfig.provider;
+              const model = activeConfig?.model || modelConfig.model;
+              const apiKey = activeConfig?.apiKey || modelConfig.apiKey;
+
+              console.log(`[Summary] 🚀 API Call /start with ID: ${meetingId}`);
+              const response = await summaryService.startIncrementalSummary(meetingId, provider, model, apiKey);
+              if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to start summary session');
+              }
+              console.log('[Summary] ✅ Backend confirmed session:', meetingId);
+              summarySessionActiveRef.current = true;
+
+              if (pendingChunksRef.current.length > 0) {
+                const backlog = pendingChunksRef.current.join(' ');
+                pendingChunksRef.current = [];
+                summaryService.addIncrementalSummaryChunk(meetingId, backlog)
+                  .then(summary => updateIncrementalSummary(summary))
+                  .catch(err => console.error('[Summary] Flush failed:', err));
+              }
+            } catch (error) {
+              console.error('[Summary] ❌ Init failed:', error);
+              toast.error('实时总结启动失败', {
+                description: error instanceof Error ? error.message : String(error),
+              });
+              // Keep summaryStartedRef as true to prevent retries with different IDs in the same session
+            }
+            // -----------------------------------------
+
+            // Fetch folder path
             try {
               const { invoke } = await import('@tauri-apps/api/core');
               const folderPath = await invoke<string>('get_meeting_folder_path');
@@ -134,9 +205,7 @@ export function TranscriptProvider({ children }: { children: ReactNode }) {
                   await indexedDBService.saveMeetingMetadata(metadata);
                 }
               }
-            } catch (error) {
-              // Non-fatal - will be set on stop if recording completes normally
-            }
+            } catch (error) {}
           } catch (error) {
             console.error('Failed to initialize meeting in IndexedDB:', error);
           }
@@ -144,11 +213,27 @@ export function TranscriptProvider({ children }: { children: ReactNode }) {
 
         // Listen for recording-stopped event
         unlistenRecordingStopped = await recordingService.onRecordingStopped(async (payload) => {
+          const meetingId = currentMeetingIdRef.current;
+          console.log('[Recording Stopped] ⏹️ Stop event received for ID:', meetingId);
+          
           try {
-            if (currentMeetingId) {
-              // Update folder path in IndexedDB
-              const metadata = await indexedDBService.getMeetingMetadata(currentMeetingId);
+            if (meetingId) {
+              // --- END INCREMENTAL SUMMARY SESSION ---
+              try {
+                console.log(`[Summary] 🏁 Ending session for: ${meetingId}`);
+                const response = await summaryService.endIncrementalSummary(meetingId);
+                if (!response.ok) {
+                  const error = await response.json();
+                  throw new Error(error.detail || 'Failed to end summary session');
+                }
+                console.log('[Summary] ✅ Session ended successfully.');
+              } catch (error) {
+                console.error('[Summary] ❌ End session failed:', error);
+              }
+              // -----------------------------------------
 
+              // Update folder path in IndexedDB
+              const metadata = await indexedDBService.getMeetingMetadata(meetingId);
               if (metadata && payload.folder_path) {
                 metadata.folderPath = payload.folder_path;
                 await indexedDBService.saveMeetingMetadata(metadata);
@@ -166,6 +251,7 @@ export function TranscriptProvider({ children }: { children: ReactNode }) {
     setupRecordingListeners();
 
     return () => {
+      isEffectMounted = false;
       if (unlistenRecordingStarted) {
         unlistenRecordingStarted();
         console.log('🧹 Recording started listener cleaned up');
@@ -175,7 +261,7 @@ export function TranscriptProvider({ children }: { children: ReactNode }) {
         console.log('🧹 Recording stopped listener cleaned up');
       }
     };
-  }, [currentMeetingId]);
+  }, [modelConfig]); // Remove currentMeetingId from dependencies to keep listeners stable
 
   // Main transcript buffering logic with sequence_id ordering
   useEffect(() => {
@@ -271,6 +357,27 @@ export function TranscriptProvider({ children }: { children: ReactNode }) {
           });
         });
 
+        // --- SEND NEW CHUNK TO SUMMARY SERVICE ---
+        const activeMeetingId = currentMeetingIdRef.current;
+        if (activeMeetingId) {
+          const textChunk = allNewTranscripts.map(t => t.text).join(' ');
+          
+          if (!summarySessionActiveRef.current) {
+            console.log('[Summary] ⏳ Session not ready, buffering chunk.');
+            pendingChunksRef.current.push(textChunk);
+          } else {
+            summaryService.addIncrementalSummaryChunk(activeMeetingId, textChunk)
+              .then(summary => {
+                console.log('[Summary] 📥 Received updated summary from backend:', summary);
+                updateIncrementalSummary(summary);
+              })
+              .catch(error => {
+                console.error('[Summary] ❌ Failed to update incremental summary:', error);
+              });
+          }
+        }
+        // -----------------------------------------
+
         // Log the processing summary
         const logMessage = forceFlush
           ? `Force flush processed ${allNewTranscripts.length} transcripts (${sortedTranscripts.length} sequential, ${forceFlushTranscripts.length} forced)`
@@ -332,31 +439,25 @@ export function TranscriptProvider({ children }: { children: ReactNode }) {
             clearTimeout(processingTimer);
           }
 
-          // Process buffer with minimal delay for immediate UI updates (serial workers = sequential order)
-          processingTimer = setTimeout(processBufferedTranscripts, 10);
+          // Process buffer with minimal delay
+          processingTimer = setTimeout(() => {
+            // Internal function inside useEffect context
+            processBufferedTranscripts();
+          }, 10);
         });
         console.log('✅ MAIN transcript listener setup complete');
       } catch (error) {
         console.error('❌ Failed to setup MAIN transcript listener:', error);
-        alert('Failed to setup transcript listener. Check console for details.');
       }
     };
 
     setupListener();
-    console.log('Started enhanced listener setup');
 
     return () => {
-      console.log('🧹 CLEANUP: Cleaning up MAIN transcript listener...');
-      if (processingTimer) {
-        clearTimeout(processingTimer);
-        console.log('🧹 CLEANUP: Cleared processing timer');
-      }
-      if (unlistenFn) {
-        unlistenFn();
-        console.log('🧹 CLEANUP: MAIN transcript listener cleaned up');
-      }
+      if (processingTimer) clearTimeout(processingTimer);
+      if (unlistenFn) unlistenFn();
     };
-  }, [currentMeetingId]); // Add currentMeetingId dependency
+  }, []); // EMPTY dependency array - listener is stable and uses Refs
 
   // Sync transcript history and meeting name from backend on reload
   // This fixes the issue where reloading during active recording causes state desync
@@ -483,6 +584,8 @@ export function TranscriptProvider({ children }: { children: ReactNode }) {
   // Clear transcripts (used when starting new recording)
   const clearTranscripts = useCallback(() => {
     setTranscripts([]);
+    setIncrementalSummary(null);
+    summaryStartedRef.current = false; // Reset summary started flag
     // Don't clear currentMeetingId here - it will be set by recording-started event
   }, []);
 
@@ -521,6 +624,8 @@ export function TranscriptProvider({ children }: { children: ReactNode }) {
     clearTranscripts,
     currentMeetingId,
     markMeetingAsSaved,
+    incrementalSummary,
+    updateIncrementalSummary,
   };
 
   return (

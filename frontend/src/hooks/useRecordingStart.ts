@@ -34,7 +34,7 @@ export function useRecordingStart(
 
   const { clearTranscripts, setMeetingTitle } = useTranscripts();
   const { setIsMeetingActive } = useSidebar();
-  const { selectedDevices } = useConfig();
+  const { selectedDevices, modelConfig, isSummaryModelReady, isConfigLoaded } = useConfig();
   const { setStatus } = useRecordingState();
 
   // Generate meeting title with timestamp
@@ -82,6 +82,15 @@ export function useRecordingStart(
   // Handle manual recording start (from button click)
   const handleRecordingStart = useCallback(async () => {
     try {
+      // Guard: Wait for config to be loaded
+      if (!isConfigLoaded) {
+        toast.info('Configuration is loading...', {
+          description: 'Please wait a moment for settings to load before starting a recording.',
+          duration: 3000,
+        });
+        return;
+      }
+
       console.log('handleRecordingStart called - checking Parakeet model status');
 
       // Check if Parakeet transcription model is ready before starting
@@ -102,6 +111,17 @@ export function useRecordingStart(
           showModal?.('modelSelector', 'Transcription model setup required');
           Analytics.trackButtonClick('start_recording_blocked_missing', 'home_page');
         }
+        setStatus(RecordingStatus.IDLE);
+        return;
+      }
+
+      // Check if Summary model is ready (especially for Ollama)
+      if (modelConfig.provider === 'ollama' && !isSummaryModelReady) {
+        toast.error('Summarization model not ready', {
+          description: 'Please wait for Ollama models to load before recording, or select a different summary provider in settings.',
+          duration: 5000,
+        });
+        Analytics.trackButtonClick('start_recording_blocked_summary_model_not_ready', 'home_page');
         setStatus(RecordingStatus.IDLE);
         return;
       }
@@ -141,7 +161,21 @@ export function useRecordingStart(
       // Re-throw so RecordingControls can handle device-specific errors
       throw error;
     }
-  }, [generateMeetingTitle, setMeetingTitle, setIsRecording, clearTranscripts, setIsMeetingActive, checkParakeetReady, checkIfModelDownloading, selectedDevices, showModal, setStatus]);
+  }, [
+    generateMeetingTitle, 
+    setMeetingTitle, 
+    setIsRecording, 
+    clearTranscripts, 
+    setIsMeetingActive, 
+    checkParakeetReady, 
+    checkIfModelDownloading, 
+    selectedDevices, 
+    showModal, 
+    setStatus,
+    modelConfig,
+    isSummaryModelReady,
+    isConfigLoaded,
+  ]);
 
   // Check for autoStartRecording flag and start recording automatically
   useEffect(() => {

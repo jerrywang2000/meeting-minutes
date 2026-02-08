@@ -101,9 +101,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${sourceSans3.variable} font-sans antialiased`}>
         <AnalyticsProvider>
-          <RecordingStateProvider>
-            <TranscriptProvider>
-              <ConfigProvider>
+          <ConfigProvider>
+            <RecordingStateProvider>
+              <TranscriptProvider>
                 <OllamaDownloadProvider>
                   <OnboardingProvider>
                     <UpdateCheckProvider>
@@ -129,9 +129,9 @@ export default function RootLayout({
                   </OnboardingProvider>
 
                 </OllamaDownloadProvider>
-              </ConfigProvider>
-            </TranscriptProvider>
-          </RecordingStateProvider>
+              </TranscriptProvider>
+            </RecordingStateProvider>
+          </ConfigProvider>
         </AnalyticsProvider>
         <Toaster position="bottom-center" richColors closeButton />
       </body>

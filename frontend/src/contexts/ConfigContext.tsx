@@ -69,6 +69,8 @@ interface ConfigContextType {
   // Summary configuration
   isAutoSummary: boolean;
   toggleIsAutoSummary: (checked: boolean) => void;
+  isSummaryModelReady: boolean;
+  isConfigLoaded: boolean;
 
   // Preference settings (lazy loaded)
   notificationSettings: NotificationSettings | null;
@@ -133,6 +135,8 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
   const [isLoadingPreferences, setIsLoadingPreferences] = useState(false);
   const preferencesLoadedRef = useRef(false);
   const isLoadingRef = useRef(false);
+  const [isSummaryModelReady, setIsSummaryModelReady] = useState(false);
+  const [isConfigLoaded, setIsConfigLoaded] = useState(false);
 
   // Format size helper function for Ollama models
   const formatSize = (size: number): string => {
@@ -147,47 +151,77 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Load Ollama models on mount
+  // Load model configuration and available Ollama models on mount
   useEffect(() => {
-    const loadModels = async () => {
+    const loadInitialModelConfig = async () => {
       try {
-        const response = await fetch('http://localhost:11434/api/tags', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+        // Fetch saved config and available models in parallel
+        const [savedConfig, ollamaModelsResponse] = await Promise.all([
+          configService.getModelConfig(),
+          fetch('http://localhost:11434/api/tags').catch(e => {
+            console.error('Ollama fetch failed:', e);
+            setError('Failed to connect to Ollama. Please ensure Ollama is running.');
+            return null; // Return null on fetch error
+          })
+        ]);
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        let finalModel = savedConfig?.model || 'llama3.2:latest';
+        let finalProvider = savedConfig?.provider || 'ollama';
+        const finalWhisperModel = savedConfig?.whisperModel || 'large-v3';
+        
+        let loadedOllamaModels: OllamaModel[] = [];
+        if (ollamaModelsResponse && ollamaModelsResponse.ok) {
+          const data = await ollamaModelsResponse.json();
+          loadedOllamaModels = data.models.map((model: any) => ({
+            name: model.name,
+            id: model.model,
+            size: formatSize(model.size),
+            modified: model.modified_at
+          }));
+          setModels(loadedOllamaModels);
         }
 
-        const data = await response.json();
-        const modelList = data.models.map((model: any) => ({
-          name: model.name,
-          id: model.model,
-          size: formatSize(model.size),
-          modified: model.modified_at
-        }));
-        setModels(modelList);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load Ollama models');
-        console.error('Error loading models:', err);
+        // Logic to determine the active model
+        if (finalProvider === 'ollama') {
+          if (loadedOllamaModels.length > 0) {
+            const savedModelExists = loadedOllamaModels.some(m => m.name === finalModel);
+            if (savedModelExists) {
+              // Saved model is valid, use it
+              console.log(`[Config] Using saved Ollama model: ${finalModel}`);
+            } else {
+              // Saved model not found, fall back to the first available model
+              finalModel = loadedOllamaModels[0].name;
+              console.log(`[Config] Saved model not found. Falling back to first available: ${finalModel}`);
+            }
+            setIsSummaryModelReady(true);
+          } else {
+            // No Ollama models available
+            setIsSummaryModelReady(false);
+            console.warn('[Config] Ollama is selected but no models are available.');
+          }
+        } else {
+          // For other providers, we assume the model is ready
+          setIsSummaryModelReady(true);
+        }
+
+        // Set the final computed config
+        setModelConfig({
+          provider: finalProvider,
+          model: finalModel,
+          whisperModel: finalWhisperModel,
+          apiKey: savedConfig?.apiKey || null,
+        });
+
+        setIsConfigLoaded(true); // Signal that config is ready
+
+      } catch (error) {
+        console.error('Failed to load initial model config:', error);
+        setIsConfigLoaded(true); // Still set to true on error to not block the UI
       }
     };
 
-    loadModels();
+    loadInitialModelConfig();
   }, []);
-
-  // Auto-select first Ollama model when models load
-  useEffect(() => {
-    if (models.length > 0 && modelConfig.provider === 'ollama') {
-      setModelConfig(prev => ({
-        ...prev,
-        model: models[0].name
-      }));
-    }
-  }, [models, modelConfig.provider]);
 
   // Load transcript configuration on mount
   useEffect(() => {
@@ -207,56 +241,6 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
       }
     };
     loadTranscriptConfig();
-  }, []);
-
-  // Load model configuration on mount
-  useEffect(() => {
-    const fetchModelConfig = async () => {
-      try {
-        const data = await configService.getModelConfig();
-        if (data && data.provider) {
-          // If provider is custom-openai, fetch the additional config
-          if (data.provider === 'custom-openai') {
-            try {
-              const customConfig = await configService.getCustomOpenAIConfig();
-              if (customConfig) {
-                // Merge custom config fields into modelConfig
-                console.log('[ConfigContext] Loading custom OpenAI config:', {
-                  endpoint: customConfig.endpoint,
-                  model: customConfig.model,
-                });
-                setModelConfig(prev => ({
-                  ...prev,
-                  provider: data.provider,
-                  model: customConfig.model || data.model || prev.model,
-                  whisperModel: data.whisperModel || prev.whisperModel,
-                  customOpenAIEndpoint: customConfig.endpoint,
-                  customOpenAIModel: customConfig.model,
-                  customOpenAIApiKey: customConfig.apiKey,
-                  maxTokens: customConfig.maxTokens,
-                  temperature: customConfig.temperature,
-                  topP: customConfig.topP,
-                }));
-                return; // Early return
-              }
-            } catch (err) {
-              console.error('[ConfigContext] Failed to fetch custom OpenAI config:', err);
-            }
-          }
-
-          // For non-custom-openai providers, just set base config
-          setModelConfig(prev => ({
-            ...prev,
-            provider: data.provider,
-            model: data.model || prev.model,
-            whisperModel: data.whisperModel || prev.whisperModel,
-          }));
-        }
-      } catch (error) {
-        console.error('Failed to fetch saved model config in ConfigContext:', error);
-      }
-    };
-    fetchModelConfig();
   }, []);
 
   // Listen for model config updates from other components
@@ -422,6 +406,8 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     notificationSettings,
     storageLocations,
     isLoadingPreferences,
+    isSummaryModelReady,
+    isConfigLoaded,
     loadPreferences,
     updateNotificationSettings,
   }), [
@@ -439,6 +425,8 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     notificationSettings,
     storageLocations,
     isLoadingPreferences,
+    isSummaryModelReady,
+    isConfigLoaded,
     loadPreferences,
     updateNotificationSettings,
   ]);

@@ -10,6 +10,7 @@ import { usePermissionCheck } from '@/hooks/usePermissionCheck';
 import { ModalType } from '@/hooks/useModalState';
 import { useIsLinux } from '@/hooks/usePlatform';
 import { useMemo } from 'react';
+import { IncrementalSummaryPanel } from './IncrementalSummaryPanel';
 
 /**
  * TranscriptPanel Component
@@ -31,7 +32,7 @@ export function TranscriptPanel({
   showModal
 }: TranscriptPanelProps) {
   // Contexts
-  const { transcripts, transcriptContainerRef, copyTranscript } = useTranscripts();
+  const { transcripts, transcriptContainerRef, copyTranscript, incrementalSummary } = useTranscripts();
   const { transcriptModelConfig } = useConfig();
   const { isRecording, isPaused } = useRecordingState();
   const { checkPermissions, isChecking, hasSystemAudio, hasMicrophone } = usePermissionCheck();
@@ -50,73 +51,83 @@ export function TranscriptPanel({
   );
 
   return (
-    <div ref={transcriptContainerRef} className="w-full border-r border-gray-200 bg-white flex flex-col overflow-y-auto">
-      {/* Title area - Sticky header */}
-      <div className="sticky top-0 z-10 bg-white p-4 border-gray-200">
-        <div className="flex flex-col space-y-3">
-          <div className="flex  flex-col space-y-2">
-            <div className="flex justify-center  items-center space-x-2">
-              <ButtonGroup>
-                {transcripts?.length > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={copyTranscript}
-                    title="Copy Transcript"
-                  >
-                    <Copy />
-                    <span className='hidden md:inline'>
-                      Copy
-                    </span>
-                  </Button>
-                )}
-                {transcriptModelConfig.provider === "localWhisper" &&
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => showModal('languageSettings')}
-                    title="Language"
-                  >
-                    <GlobeIcon />
-                    <span className='hidden md:inline'>
-                      Language
-                    </span>
-                  </Button>
-                }
-              </ButtonGroup>
+    <div className="w-full flex-1 flex flex-row overflow-hidden">
+      {/* Main Transcript Panel */}
+      <div ref={transcriptContainerRef} className="flex-1 border-r border-gray-200 bg-white flex flex-col overflow-y-auto">
+        {/* Title area - Sticky header */}
+        <div className="sticky top-0 z-10 bg-white p-4 border-gray-200">
+          <div className="flex flex-col space-y-3">
+            <div className="flex  flex-col space-y-2">
+              <div className="flex justify-center  items-center space-x-2">
+                <ButtonGroup>
+                  {transcripts?.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={copyTranscript}
+                      title="Copy Transcript"
+                    >
+                      <Copy />
+                      <span className='hidden md:inline'>
+                        Copy
+                      </span>
+                    </Button>
+                  )}
+                  {transcriptModelConfig.provider === "localWhisper" &&
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => showModal('languageSettings')}
+                      title="Language"
+                    >
+                      <GlobeIcon />
+                      <span className='hidden md:inline'>
+                        Language
+                      </span>
+                    </Button>
+                  }
+                </ButtonGroup>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Permission Warning - Not needed on Linux */}
+        {!isRecording && !isChecking && !isLinux && (
+          <div className="flex justify-center px-4 pt-4">
+            <PermissionWarning
+              hasMicrophone={hasMicrophone}
+              hasSystemAudio={hasSystemAudio}
+              onRecheck={checkPermissions}
+              isRechecking={isChecking}
+            />
+          </div>
+        )}
+
+        {/* Transcript content */}
+        <div className="pb-20">
+          <div className="flex justify-center">
+            <div className="w-2/3 max-w-[750px]">
+              <VirtualizedTranscriptView
+                segments={segments}
+                isRecording={isRecording}
+                isPaused={isPaused}
+                isProcessing={isProcessingStop}
+                isStopping={isStopping}
+                enableStreaming={isRecording}
+                showConfidence={true}
+              />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Permission Warning - Not needed on Linux */}
-      {!isRecording && !isChecking && !isLinux && (
-        <div className="flex justify-center px-4 pt-4">
-          <PermissionWarning
-            hasMicrophone={hasMicrophone}
-            hasSystemAudio={hasSystemAudio}
-            onRecheck={checkPermissions}
-            isRechecking={isChecking}
-          />
+      {/* Incremental Summary Panel */}
+      {(isRecording || incrementalSummary) && (
+        <div className="w-[400px] border-l border-gray-200 bg-gray-50">
+          <IncrementalSummaryPanel summary={incrementalSummary} />
         </div>
       )}
-
-      {/* Transcript content */}
-      <div className="pb-20">
-        <div className="flex justify-center">
-          <div className="w-2/3 max-w-[750px]">
-            <VirtualizedTranscriptView
-              segments={segments}
-              isRecording={isRecording}
-              isPaused={isPaused}
-              isProcessing={isProcessingStop}
-              isStopping={isStopping}
-              enableStreaming={isRecording}
-              showConfidence={true}
-            />
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

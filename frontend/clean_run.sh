@@ -3,6 +3,11 @@
 # Exit on error
 set -e
 
+# Kill any process on port 3119 to prevent EADDRINUSE error
+echo "Attempting to free up port 3119..."
+pnpm kill-port 3119 || true
+echo "Port 3119 should be free."
+
 # Add log level selector with default to INFO
 LOG_LEVEL=${1:-info}
 
