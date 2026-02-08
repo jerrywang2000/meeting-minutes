@@ -8,7 +8,13 @@ interface IncrementalSummaryPanelProps {
   summary: SummaryResponse | null;
 }
 
-const SectionCard = ({ title, section }: { title: string, section: SummarySection | undefined }) => {
+interface SectionCardProps {
+  title: string;
+  section: SummarySection | undefined;
+  type?: 'bullet' | 'action' | 'default';
+}
+
+const SectionCard = ({ title, section, type = 'default' }: SectionCardProps) => {
   if (!section || section.blocks.length === 0) {
     return null;
   }
@@ -21,12 +27,26 @@ const SectionCard = ({ title, section }: { title: string, section: SummarySectio
       className="mb-4"
     >
       <Card>
-        <CardHeader className="p-4">
-          <CardTitle className="text-md font-semibold">{title}</CardTitle>
+        <CardHeader className="p-4 pb-2">
+          <CardTitle className="text-sm font-bold uppercase tracking-wider text-gray-500">{title}</CardTitle>
         </CardHeader>
         <CardContent className="p-4 pt-0 text-sm">
           {section.blocks.map(block => (
-            <p key={block.id} className="mb-1">{block.content}</p>
+            <div key={block.id} className="flex items-start mb-2 group">
+              {type === 'bullet' && (
+                <span className="mr-2 mt-1 text-gray-400">•</span>
+              )}
+              {type === 'action' && (
+                <input 
+                  type="checkbox" 
+                  className="mr-3 mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              )}
+              <p className={type === 'action' ? 'text-gray-700' : 'text-gray-600'}>
+                {block.content}
+              </p>
+            </div>
           ))}
         </CardContent>
       </Card>
@@ -87,14 +107,17 @@ export function IncrementalSummaryPanel({ summary }: IncrementalSummaryPanelProp
 
   return (
     <div className="w-full h-full p-4 bg-gray-50 overflow-y-auto">
-      <h2 className="text-lg font-bold mb-4">{summary.meeting_name || (summary as any).MeetingName || 'Live Meeting Summary'}</h2>
+      <div className="mb-6">
+        <h2 className="text-xl font-bold text-gray-900">{summary.meeting_name || (summary as any).MeetingName || 'Live Meeting Summary'}</h2>
+        <div className="h-1 w-12 bg-blue-500 mt-2 rounded-full"></div>
+      </div>
       
-      <SectionCard title="Action Items" section={sections.immediate_action_items} />
-      <SectionCard title="Key Decisions" section={sections.key_items_decisions} />
-      <SectionCard title="Next Steps" section={sections.next_steps} />
-      <SectionCard title="People" section={sections.people} />
-      <SectionCard title="Deadlines" section={sections.critical_deadlines} />
-      <SectionCard title="General Summary" section={sections.session_summary} />
+      <SectionCard title="Action Items" section={sections.immediate_action_items} type="action" />
+      <SectionCard title="Key Decisions" section={sections.key_items_decisions} type="bullet" />
+      <SectionCard title="Next Steps" section={sections.next_steps} type="action" />
+      <SectionCard title="People" section={sections.people} type="bullet" />
+      <SectionCard title="Deadlines" section={sections.critical_deadlines} type="bullet" />
+      <SectionCard title="General Summary" section={sections.session_summary} type="bullet" />
 
     </div>
   );
