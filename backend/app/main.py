@@ -81,6 +81,8 @@ class SaveTranscriptRequest(BaseModel):
     meeting_title: str
     transcripts: List[Transcript]
     folder_path: Optional[str] = None
+    meeting_id: Optional[str] = None
+    real_time_summary: Optional[dict] = None
 
 class SaveModelConfigRequest(BaseModel):
     provider: str
@@ -277,8 +279,16 @@ async def get_summary(meeting_id: str):
 async def save_transcript(request: SaveTranscriptRequest):
     try:
         logger.info(f"Received save-transcript request for meeting: {request.meeting_title}")
-        meeting_id = f"meeting-{int(time.time() * 1000)}"
-        await db.save_meeting(meeting_id, request.meeting_title, folder_path=request.folder_path)
+        meeting_id = request.meeting_id or f"meeting-{int(time.time() * 1000)}"
+        real_time_summary_str = json.dumps(request.real_time_summary) if request.real_time_summary else None
+        
+        await db.save_meeting(
+            meeting_id, 
+            request.meeting_title, 
+            folder_path=request.folder_path,
+            real_time_summary=real_time_summary_str
+        )
+        
         for transcript in request.transcripts:
             await db.save_meeting_transcript(
                 meeting_id=meeting_id,

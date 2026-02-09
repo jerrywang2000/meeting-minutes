@@ -18,6 +18,7 @@ import { useConfig } from '@/contexts/ConfigContext';
 export default function PageContent({
   meeting,
   summaryData,
+  realTimeSummary,
   shouldAutoGenerate = false,
   onAutoGenerateComplete,
   onMeetingUpdated,
@@ -31,6 +32,7 @@ export default function PageContent({
 }: {
   meeting: any;
   summaryData: Summary | null;
+  realTimeSummary?: any | null;
   shouldAutoGenerate?: boolean;
   onAutoGenerateComplete?: () => void;
   onMeetingUpdated?: () => Promise<void>;
@@ -45,6 +47,7 @@ export default function PageContent({
   console.log('📄 PAGE CONTENT: Initializing with data:', {
     meetingId: meeting.id,
     summaryDataKeys: summaryData ? Object.keys(summaryData) : null,
+    hasRealTimeSummary: !!realTimeSummary,
     transcriptsCount: meeting.transcripts?.length
   });
 
@@ -166,6 +169,7 @@ export default function PageContent({
           totalCount={totalCount}
           loadedCount={loadedCount}
           onLoadMore={onLoadMore}
+          aiSummary={realTimeSummary}
         />
         <SummaryPanel
           meeting={meeting}

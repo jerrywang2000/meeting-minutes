@@ -64,6 +64,13 @@ class DatabaseManager:
                 logger.info("Added folder_path column to meetings table")
             except sqlite3.OperationalError:
                 pass  # Column already exists
+
+            # Migration: Add real_time_summary column to existing meetings table
+            try:
+                cursor.execute("ALTER TABLE meetings ADD COLUMN real_time_summary TEXT")
+                logger.info("Added real_time_summary column to meetings table")
+            except sqlite3.OperationalError:
+                pass  # Column already exists
             
             # Create transcripts table
             cursor.execute("""
@@ -368,7 +375,7 @@ class DatabaseManager:
                     return dict(zip([col[0] for col in cursor.description], row))
                 return None
 
-    async def save_meeting(self, meeting_id: str, title: str, folder_path: str = None):
+    async def save_meeting(self, meeting_id: str, title: str, folder_path: str = None, real_time_summary: str = None):
         """Save or update a meeting"""
         try:
             with sqlite3.connect(self.db_path) as conn:
@@ -381,9 +388,9 @@ class DatabaseManager:
                 if not existing_meeting:
                     # Create new meeting with local timestamp and folder path
                     cursor.execute("""
-                        INSERT INTO meetings (id, title, created_at, updated_at, folder_path)
-                        VALUES (?, ?, datetime('now', 'localtime'), datetime('now', 'localtime'), ?)
-                    """, (meeting_id, title, folder_path))
+                        INSERT INTO meetings (id, title, created_at, updated_at, folder_path, real_time_summary)
+                        VALUES (?, ?, datetime('now', 'localtime'), datetime('now', 'localtime'), ?, ?)
+                    """, (meeting_id, title, folder_path, real_time_summary))
                     logger.info(f"Saved meeting {meeting_id} with folder_path: {folder_path}")
                 else:
                     # If we get here and meeting exists, throw error since we don't want duplicates

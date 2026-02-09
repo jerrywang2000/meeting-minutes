@@ -47,14 +47,15 @@ export function useRecordingStop(
     isSaving: isSavingTranscript
   } = recordingState;
 
-  const {
-    transcriptsRef,
-    flushBuffer,
-    clearTranscripts,
-    meetingTitle,
-    markMeetingAsSaved,
-  } = useTranscripts();
-
+      const {
+      transcriptsRef,
+      flushBuffer,
+      clearTranscripts,
+      meetingTitle,
+      markMeetingAsSaved,
+      currentMeetingId,
+      incrementalSummary,
+    } = useTranscripts();
   const {
     refetchMeetings,
     setCurrentMeeting,
@@ -244,6 +245,8 @@ export function useRecordingStop(
           transcript_count: freshTranscripts.length,
           meeting_name: savedMeetingName || meetingTitle,
           folder_path: folderPath,
+          meeting_id: currentMeetingId,
+          has_summary: !!incrementalSummary,
           sample_text: freshTranscripts.length > 0 ? freshTranscripts[0].text.substring(0, 50) + '...' : 'none',
           last_transcript: freshTranscripts.length > 0 ? freshTranscripts[freshTranscripts.length - 1].text.substring(0, 30) + '...' : 'none',
         });
@@ -252,7 +255,9 @@ export function useRecordingStop(
           const responseData = await storageService.saveMeeting(
             savedMeetingName || meetingTitle || 'New Meeting',  // PREFER savedMeetingName (backend source)
             freshTranscripts,
-            folderPath
+            folderPath,
+            currentMeetingId,
+            incrementalSummary
           );
 
           const meetingId = responseData.meeting_id;
@@ -295,10 +300,10 @@ export function useRecordingStop(
           setStatus(RecordingStatus.COMPLETED);
 
           // Show success toast with navigation option
-          toast.success('Recording saved successfully!', {
-            description: `${freshTranscripts.length} transcript segments saved.`,
+          toast.success('录制保存成功！', {
+            description: `已保存 ${freshTranscripts.length} 条转录片段。`,
             action: {
-              label: 'View Meeting',
+              label: '查看会议',
               onClick: () => {
                 router.push(`/meeting-details?id=${meetingId}`);
                 Analytics.trackButtonClick('view_meeting_from_toast', 'recording_complete');
@@ -369,9 +374,9 @@ export function useRecordingStop(
 
         } catch (saveError) {
           console.error('Failed to save meeting to database:', saveError);
-          setStatus(RecordingStatus.ERROR, saveError instanceof Error ? saveError.message : 'Unknown error');
-          toast.error('Failed to save meeting', {
-            description: saveError instanceof Error ? saveError.message : 'Unknown error'
+          setStatus(RecordingStatus.ERROR, saveError instanceof Error ? saveError.message : '未知错误');
+          toast.error('会议保存失败', {
+            description: saveError instanceof Error ? saveError.message : '未知错误'
           });
           throw saveError;
         }
@@ -385,7 +390,7 @@ export function useRecordingStop(
       setIsRecordingDisabled(false);
     } catch (error) {
       console.error('Error in handleRecordingStop:', error);
-      setStatus(RecordingStatus.ERROR, error instanceof Error ? error.message : 'Unknown error');
+      setStatus(RecordingStatus.ERROR, error instanceof Error ? error.message : '未知错误');
       // isRecording already set to false at function start
       setIsRecordingDisabled(false);
     } finally {
@@ -407,6 +412,8 @@ export function useRecordingStop(
     meetings,
     setIsMeetingActive,
     router,
+    currentMeetingId,
+    incrementalSummary,
   ]);
 
   // Expose handleRecordingStop function to window for Rust callbacks

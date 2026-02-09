@@ -1,38 +1,38 @@
 {
-  "name": "Daily Standup",
-  "description": "Time-boxed daily updates for engineering/product teams.",
+  "name": "每日站会",
+  "description": "为工程和产品团队设计的简洁模板，涵盖昨日进展、今日计划和阻碍因素。",
   "sections": [
     {
-      "title": "Date",
+      "title": "日期",
       "instruction": "YYYY-MM-DD",
       "format": "string"
     },
     {
-      "title": "Attendees",
-      "instruction": "List of participants present",
+      "title": "与会者",
+      "instruction": "列出参会人员",
       "format": "list"
     },
     {
-      "title": "Yesterday",
-      "instruction": "What I completed yesterday (short bullets)",
+      "title": "昨日工作",
+      "instruction": "昨日已完成的工作（简短列出）",
       "format": "list",
-      "example_item_format": "| **Owner** | **Completed Work** |\n| --- | --- |"
+      "example_item_format": "| **负责人** | **已完成工作** |\n| --- | --- |"
     },
     {
-      "title": "Today",
-      "instruction": "Planned work for today (short bullets)",
+      "title": "今日计划",
+      "instruction": "今日计划的工作（简短列出）",
       "format": "list",
-      "example_item_format": "| **Owner** | **Planned Work** |\n| --- | --- |"
+      "example_item_format": "| **负责人** | **计划工作** |\n| --- | --- |"
     },
     {
-      "title": "Blockers",
-      "instruction": "Any impediments and owner if known",
+      "title": "阻碍因素",
+      "instruction": "任何阻碍因素及其负责人（若已知）",
       "format": "list",
-      "item_format": "| **Owner** | **Blocker** | Impact |\n| --- | --- | --- |"
+      "item_format": "| **负责人** | **阻碍因素** | 影响 |\n| --- | --- | --- |"
     },
     {
-      "title": "Notes",
-      "instruction": "Optional quick notes or announcements",
+      "title": "备注",
+      "instruction": "可选的快速说明或公告",
       "format": "paragraph"
     }
   ]

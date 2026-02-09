@@ -48,7 +48,8 @@ impl SummaryProcessesRepository {
         }
         let now = Utc::now();
 
-        sqlx::query("UPDATE summary_processes SET result = ?, updated_at = ? WHERE meeting_id = ?")
+        // Update both result and status to 'completed' for real-time summaries
+        sqlx::query("UPDATE summary_processes SET result = ?, status = 'completed', updated_at = ? WHERE meeting_id = ?")
             .bind(&result_json.unwrap())
             .bind(now)
             .bind(meeting_id)
@@ -64,7 +65,7 @@ impl SummaryProcessesRepository {
         transaction.commit().await?;
 
         log_info!(
-            "Successfully updated summary and timestamp for meeting_id: {}",
+            "Successfully updated summary and status to completed for meeting_id: {}",
             meeting_id
         );
         Ok(true)
@@ -74,8 +75,9 @@ impl SummaryProcessesRepository {
         pool: &SqlitePool,
         meeting_id: &str,
     ) -> Result<Option<SummaryProcess>, sqlx::Error> {
+        // Removed JOIN with transcript_chunks as real-time summaries might not have chunks yet
         sqlx::query_as::<_, SummaryProcess>(
-            "SELECT p.* FROM summary_processes p JOIN transcript_chunks t ON p.meeting_id = t.meeting_id WHERE p.meeting_id = ?",
+            "SELECT * FROM summary_processes WHERE meeting_id = ?",
         )
         .bind(meeting_id)
         .fetch_optional(pool)

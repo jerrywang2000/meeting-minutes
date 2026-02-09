@@ -132,17 +132,32 @@ class IncrementalSummarizer:
 
     async def _summarize_and_update(self, chunk_to_process: str):
         prompt = f"""
-        Analyze the following meeting transcript chunk. Your task is to extract key information and format it as a single JSON object.
+        Analyze the following meeting transcript chunk and extract key information into a JSON object.
+
+        **JSON Structure Requirement:**
+        {{
+          "MeetingName": "string or null",
+          "People": {{ "title": "People", "blocks": [] }},
+          "SessionSummary": {{
+            "title": "Notes",
+            "blocks": [ {{ "id": "string", "type": "bullet", "content": "提炼的核心信息", "color": "" }} ]
+          }},
+          "CriticalDeadlines": {{ "title": "Critical Deadlines", "blocks": [] }},
+          "KeyItemsDecisions": {{ "title": "Key Items & Decisions", "blocks": [] }},
+          "ImmediateActionItems": {{
+            "title": "Action Items",
+            "blocks": [ {{ "id": "string", "type": "bullet", "content": "任务描述", "color": "" }} ]
+          }},
+          "NextSteps": {{ "title": "Next Steps", "blocks": [] }},
+          "MeetingNotes": {{ "sections": [] }}
+        }}
 
         **Instructions:**
-        - Your response MUST be a single, valid JSON object.
-        - The JSON object must have these keys: "MeetingName", "People", "SessionSummary", "CriticalDeadlines", "KeyItemsDecisions", "ImmediateActionItems", "NextSteps", "MeetingNotes".
-        - "MeetingName" should be a string or null.
-        - The other top-level keys should contain an object with a "title" and a "blocks" array.
-        - "blocks" must be an array of objects, where each object has "id" (string), "type" (string), "content" (string), and "color" (string).
-        - If you cannot find any information for a key, its "blocks" array should be empty.
-        - The "content" text should be in Chinese.
-        - Respond ONLY with the JSON object.
+        1. Use "SessionSummary" for **Notes**: 提炼总结当前内容的核心信息，保持简洁。
+        2. Use "ImmediateActionItems" for **Action Items**: 识别待办任务：只有当某人要完成某项任务时才算是待办任务。必须包含描述，若有负责人或截止日期请在任务描述后添加，若没有则只包含描述。
+        3. 所有回答必须使用 **中文**。
+        4. 只返回 JSON 对象，不要有任何解释文字。
+        5. 其他不相关的字段（People, NextSteps等）请保持 "blocks" 为空数组。
 
         **Transcript Chunk:**
         ---

@@ -49,7 +49,7 @@ export function useSummaryGeneration({
       case 'regenerating':
         return '正在重新生成纪要...';
       case 'completed':
-        return '纪要已完成';
+        return '';
       case 'error':
         return '生成纪要时出错';
       default:

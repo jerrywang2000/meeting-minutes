@@ -27,6 +27,7 @@ function MeetingDetailsContent() {
   const router = useRouter();
   const [meetingDetails, setMeetingDetails] = useState<MeetingDetailsResponse | null>(null);
   const [meetingSummary, setMeetingSummary] = useState<Summary | null>(null);
+  const [realTimeSummary, setRealTimeSummary] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [shouldAutoGenerate, setShouldAutoGenerate] = useState<boolean>(false);
@@ -45,6 +46,8 @@ function MeetingDetailsContent() {
     loadMore,
     error: transcriptError,
   } = usePaginatedTranscripts({ meetingId: meetingId || '' });
+
+  // ... (keeping other parts of the function)
 
   // Check if gemma3:1b model is available in Ollama
   const checkForGemmaModel = useCallback(async (): Promise<boolean> => {
@@ -124,6 +127,16 @@ function MeetingDetailsContent() {
     if (metadata) {
       console.log('Meeting metadata loaded:', metadata);
 
+      // Extract real-time summary from metadata if it exists
+      if ((metadata as any).real_time_summary) {
+        try {
+          const parsedRealTime = JSON.parse((metadata as any).real_time_summary);
+          setRealTimeSummary(parsedRealTime);
+        } catch (e) {
+          console.error('Failed to parse real-time summary from metadata:', e);
+        }
+      }
+
       // Build meeting details from metadata and paginated transcripts
       setMeetingDetails({
         id: metadata.id,
@@ -161,6 +174,7 @@ function MeetingDetailsContent() {
   useEffect(() => {
     setMeetingDetails(null);
     setMeetingSummary(null);
+    setRealTimeSummary(null);
     setError(null);
     setIsLoading(true);
     // Reset auto-generation state to allow new meeting to be checked
@@ -235,6 +249,16 @@ function MeetingDetailsContent() {
         // Priority 2: Markdown format
         if (parsedData.markdown) {
           setMeetingSummary(parsedData as any);
+          return;
+        }
+
+        // Priority 3: Check if it's a SummaryResponse (Incremental Summary)
+        // If it has session_summary and people, it's likely our new real-time summary structure
+        if (parsedData.session_summary && parsedData.people) {
+          console.log('INCREMENTAL SUMMARY: Detected real-time summary format');
+          // Update realTimeSummary state but NOT the main meetingSummary
+          setRealTimeSummary((prev: any) => prev || parsedData);
+          setMeetingSummary(null);
           return;
         }
 
@@ -358,6 +382,7 @@ function MeetingDetailsContent() {
   return <PageContent
     meeting={meetingDetails}
     summaryData={meetingSummary}
+    realTimeSummary={realTimeSummary}
     shouldAutoGenerate={shouldAutoGenerate}
     onAutoGenerateComplete={() => setShouldAutoGenerate(false)}
     onMeetingUpdated={async () => {

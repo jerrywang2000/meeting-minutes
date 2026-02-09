@@ -60,11 +60,11 @@ export function IncrementalSummaryPanel({ summary }: IncrementalSummaryPanelProp
     if (!summary) return undefined;
     
     // Try original key (e.g., session_summary)
-    if (summary[key]) return summary[key] as SummarySection;
+    if (summary[key] && (summary[key] as any).blocks) return summary[key] as SummarySection;
     
     // Try PascalCase alias (e.g., SessionSummary)
     const pascalKey = key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('') as any;
-    if ((summary as any)[pascalKey]) return (summary as any)[pascalKey];
+    if ((summary as any)[pascalKey] && (summary as any)[pascalKey].blocks) return (summary as any)[pascalKey];
     
     return undefined;
   };
@@ -79,20 +79,12 @@ export function IncrementalSummaryPanel({ summary }: IncrementalSummaryPanelProp
 
   const sections = {
     immediate_action_items: getSection('immediate_action_items'),
-    key_items_decisions: getSection('key_items_decisions'),
-    next_steps: getSection('next_steps'),
-    people: getSection('people'),
-    critical_deadlines: getSection('critical_deadlines'),
     session_summary: getSection('session_summary'),
   };
 
   const isSummaryEmpty = 
-    !sections.people?.blocks?.length &&
-    !sections.session_summary?.blocks?.length &&
-    !sections.critical_deadlines?.blocks?.length &&
-    !sections.key_items_decisions?.blocks?.length &&
-    !sections.immediate_action_items?.blocks?.length &&
-    !sections.next_steps?.blocks?.length;
+    (!sections.session_summary || sections.session_summary.blocks.length === 0) &&
+    (!sections.immediate_action_items || sections.immediate_action_items.blocks.length === 0);
 
   if (isSummaryEmpty) {
     return (
@@ -106,19 +98,9 @@ export function IncrementalSummaryPanel({ summary }: IncrementalSummaryPanelProp
   }
 
   return (
-    <div className="w-full h-full p-4 bg-gray-50 overflow-y-auto">
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-gray-900">{summary.meeting_name || (summary as any).MeetingName || 'Live Meeting Summary'}</h2>
-        <div className="h-1 w-12 bg-blue-500 mt-2 rounded-full"></div>
-      </div>
-      
+    <div className="w-full h-full p-4 bg-gray-50 overflow-y-auto scrollbar-hide">
+      <SectionCard title="Notes" section={sections.session_summary} type="bullet" />
       <SectionCard title="Action Items" section={sections.immediate_action_items} type="action" />
-      <SectionCard title="Key Decisions" section={sections.key_items_decisions} type="bullet" />
-      <SectionCard title="Next Steps" section={sections.next_steps} type="action" />
-      <SectionCard title="People" section={sections.people} type="bullet" />
-      <SectionCard title="Deadlines" section={sections.critical_deadlines} type="bullet" />
-      <SectionCard title="General Summary" section={sections.session_summary} type="bullet" />
-
     </div>
   );
 }

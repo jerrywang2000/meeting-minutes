@@ -9,7 +9,7 @@ use crate::{
         models::MeetingModel,
         repositories::{
             meeting::MeetingsRepository, setting::SettingsRepository,
-            transcript::TranscriptsRepository,
+            summary::SummaryProcessesRepository, transcript::TranscriptsRepository,
         },
     },
     onboarding::load_onboarding_status,
@@ -124,6 +124,8 @@ pub struct MeetingDetails {
     pub created_at: String,
     pub updated_at: String,
     pub transcripts: Vec<MeetingTranscript>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub real_time_summary: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -149,6 +151,8 @@ pub struct MeetingMetadata {
     pub updated_at: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub folder_path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub real_time_summary: Option<String>,
 }
 
 /// Paginated transcripts response with total count
@@ -829,6 +833,7 @@ pub async fn api_get_meeting_metadata<R: Runtime>(
                 created_at: meeting.created_at.0.to_rfc3339(),
                 updated_at: meeting.updated_at.0.to_rfc3339(),
                 folder_path: meeting.folder_path,
+                real_time_summary: meeting.real_time_summary,
             })
         }
         Ok(None) => {
@@ -935,13 +940,17 @@ pub async fn api_save_transcript<R: Runtime>(
     transcripts: Vec<serde_json::Value>,
     folder_path: Option<String>,
     auth_token: Option<String>,
+    meeting_id: Option<String>,
+    summary: Option<serde_json::Value>,
 ) -> Result<serde_json::Value, String> {
     log_info!(
-        "api_save_transcript called for meeting: {}, transcripts: {}, folder_path: {:?}, auth_token: {}",
+        "api_save_transcript called for meeting: {}, transcripts: {}, folder_path: {:?}, auth_token: {}, meeting_id: {:?}, has_summary: {}",
         meeting_title,
         transcripts.len(),
         folder_path,
-        auth_token.is_some()
+        auth_token.is_some(),
+        meeting_id,
+        summary.is_some()
     );
 
     // Log first transcript for debugging
@@ -973,12 +982,17 @@ pub async fn api_save_transcript<R: Runtime>(
 
     let pool = state.db_manager.pool();
 
+    // Convert summary to string if provided
+    let real_time_summary_str = summary.map(|v| serde_json::to_string(&v).unwrap_or_default());
+
     // Now, call the repository with the correctly typed data.
     match TranscriptsRepository::save_transcript(
         pool,
         &meeting_title,
         &transcripts_to_save,
         folder_path,
+        meeting_id,
+        real_time_summary_str,
     )
     .await
     {
@@ -987,6 +1001,7 @@ pub async fn api_save_transcript<R: Runtime>(
                 "Successfully saved transcript and created meeting with id: {}",
                 meeting_id
             );
+
             Ok(serde_json::json!({
                 "status": "success",
                 "message": "Transcript saved successfully",

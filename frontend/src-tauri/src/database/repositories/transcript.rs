@@ -15,8 +15,10 @@ impl TranscriptsRepository {
         meeting_title: &str,
         transcripts: &[TranscriptSegment],
         folder_path: Option<String>,
+        meeting_id: Option<String>,
+        real_time_summary: Option<String>,
     ) -> Result<String, SqlxError> {
-        let meeting_id = format!("meeting-{}", Uuid::new_v4());
+        let final_meeting_id = meeting_id.unwrap_or_else(|| format!("meeting-{}", Uuid::new_v4()));
 
         let mut conn = pool.acquire().await?;
         let mut transaction = conn.begin().await?;
@@ -25,13 +27,14 @@ impl TranscriptsRepository {
 
         // 1. Create the new meeting
         let result = sqlx::query(
-            "INSERT INTO meetings (id, title, created_at, updated_at, folder_path) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO meetings (id, title, created_at, updated_at, folder_path, real_time_summary) VALUES (?, ?, ?, ?, ?, ?)",
         )
-        .bind(&meeting_id)
+        .bind(&final_meeting_id)
         .bind(meeting_title)
         .bind(now)
         .bind(now)
         .bind(&folder_path)
+        .bind(&real_time_summary)
         .execute(&mut *transaction)
         .await;
 
@@ -41,7 +44,7 @@ impl TranscriptsRepository {
             return Err(e);
         }
 
-        info!("Successfully created meeting with id: {}", meeting_id);
+        info!("Successfully created meeting with id: {}", final_meeting_id);
 
         // 2. Save each transcript segment with audio timing fields
         for segment in transcripts {
@@ -51,7 +54,7 @@ impl TranscriptsRepository {
                  VALUES (?, ?, ?, ?, ?, ?, ?)"
             )
             .bind(&transcript_id)
-            .bind(&meeting_id)
+            .bind(&final_meeting_id)
             .bind(&segment.text)
             .bind(&segment.timestamp)
             .bind(segment.audio_start_time)
@@ -63,7 +66,7 @@ impl TranscriptsRepository {
             if let Err(e) = result {
                 error!(
                     "Failed to save transcript segment for meeting {}: {}",
-                    meeting_id, e
+                    final_meeting_id, e
                 );
                 transaction.rollback().await?;
                 return Err(e);
@@ -73,13 +76,13 @@ impl TranscriptsRepository {
         info!(
             "Successfully saved {} transcript segments for meeting {}",
             transcripts.len(),
-            meeting_id
+            final_meeting_id
         );
 
         // Commit the transaction
         transaction.commit().await?;
 
-        Ok(meeting_id)
+        Ok(final_meeting_id)
     }
 
     /// Searches for a query string within the transcripts.

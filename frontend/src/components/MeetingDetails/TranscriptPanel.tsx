@@ -1,10 +1,11 @@
 "use client";
 
-import { Transcript, TranscriptSegmentData } from '@/types';
+import { Transcript, TranscriptSegmentData, Summary } from '@/types';
 import { TranscriptView } from '@/components/TranscriptView';
 import { VirtualizedTranscriptView } from '@/components/VirtualizedTranscriptView';
 import { TranscriptButtonGroup } from './TranscriptButtonGroup';
 import { useMemo } from 'react';
+import { IncrementalSummaryPanel } from '@/app/_components/IncrementalSummaryPanel';
 
 interface TranscriptPanelProps {
   transcripts: Transcript[];
@@ -14,6 +15,7 @@ interface TranscriptPanelProps {
   onOpenMeetingFolder: () => Promise<void>;
   isRecording: boolean;
   disableAutoScroll?: boolean;
+  aiSummary?: Summary | null;
 
   // Optional pagination props (when using virtualization)
   usePagination?: boolean;
@@ -33,6 +35,7 @@ export function TranscriptPanel({
   onOpenMeetingFolder,
   isRecording,
   disableAutoScroll = false,
+  aiSummary,
   usePagination = false,
   segments,
   hasMore,
@@ -68,35 +71,34 @@ export function TranscriptPanel({
       </div>
 
       {/* Transcript content - use virtualized view for better performance */}
-      <div className="flex-1 overflow-hidden pb-4">
-        <VirtualizedTranscriptView
-          segments={convertedSegments}
-          isRecording={isRecording}
-          isPaused={false}
-          isProcessing={false}
-          isStopping={false}
-          enableStreaming={false}
-          showConfidence={true}
-          disableAutoScroll={disableAutoScroll}
-          hasMore={hasMore}
-          isLoadingMore={isLoadingMore}
-          totalCount={totalCount}
-          loadedCount={loadedCount}
-          onLoadMore={onLoadMore}
-        />
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden pb-4">
+        <div className={!isRecording && aiSummary ? "h-1/2 border-b border-gray-100 overflow-hidden" : "flex-1 overflow-hidden"}>
+          <VirtualizedTranscriptView
+            segments={convertedSegments}
+            isRecording={isRecording}
+            isPaused={false}
+            isProcessing={false}
+            isStopping={false}
+            enableStreaming={false}
+            showConfidence={true}
+            disableAutoScroll={disableAutoScroll}
+            hasMore={hasMore}
+            isLoadingMore={isLoadingMore}
+                      totalCount={totalCount}
+                      loadedCount={loadedCount}
+                      onLoadMore={onLoadMore}
+                      className="scrollbar-hide"
+                    />        </div>
+
+        {/* Saved Summary content below transcript */}
+        {!isRecording && aiSummary && (
+          <div className="flex-1 overflow-y-auto p-4 bg-gray-50 scrollbar-hide">
+            <h3 className="text-sm font-semibold text-gray-500 mb-4 uppercase tracking-wider">实时总结回顾</h3>
+            <IncrementalSummaryPanel summary={aiSummary as any} />
+          </div>
+        )}
       </div>
 
-      {/* Custom prompt input at bottom of transcript section */}
-      {!isRecording && convertedSegments.length > 0 && (
-        <div className="p-1 border-t border-gray-200">
-          <textarea
-            placeholder="为AI纪要添加背景信息。例如，与会者、会议概览、目标等..."
-            className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm min-h-[80px] resize-y"
-            value={customPrompt}
-            onChange={(e) => onPromptChange(e.target.value)}
-          />
-        </div>
-      )}
     </div>
   );
 }

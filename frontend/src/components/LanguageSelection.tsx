@@ -11,107 +11,107 @@ export interface Language {
 
 // ISO 639-1 language codes supported by Whisper
 const LANGUAGES: Language[] = [
-  { code: 'auto', name: 'Auto Detect (Original Language)' },
-  { code: 'auto-translate', name: 'Auto Detect (Translate to English)' },
-  { code: 'en', name: 'English' },
-  { code: 'zh', name: 'Chinese' },
-  { code: 'de', name: 'German' },
-  { code: 'es', name: 'Spanish' },
-  { code: 'ru', name: 'Russian' },
-  { code: 'ko', name: 'Korean' },
-  { code: 'fr', name: 'French' },
-  { code: 'ja', name: 'Japanese' },
-  { code: 'pt', name: 'Portuguese' },
-  { code: 'tr', name: 'Turkish' },
-  { code: 'pl', name: 'Polish' },
-  { code: 'ca', name: 'Catalan' },
-  { code: 'nl', name: 'Dutch' },
-  { code: 'ar', name: 'Arabic' },
-  { code: 'sv', name: 'Swedish' },
-  { code: 'it', name: 'Italian' },
-  { code: 'id', name: 'Indonesian' },
-  { code: 'hi', name: 'Hindi' },
-  { code: 'fi', name: 'Finnish' },
-  { code: 'vi', name: 'Vietnamese' },
-  { code: 'he', name: 'Hebrew' },
-  { code: 'uk', name: 'Ukrainian' },
-  { code: 'el', name: 'Greek' },
-  { code: 'ms', name: 'Malay' },
-  { code: 'cs', name: 'Czech' },
-  { code: 'ro', name: 'Romanian' },
-  { code: 'da', name: 'Danish' },
-  { code: 'hu', name: 'Hungarian' },
-  { code: 'ta', name: 'Tamil' },
-  { code: 'no', name: 'Norwegian' },
-  { code: 'th', name: 'Thai' },
-  { code: 'ur', name: 'Urdu' },
-  { code: 'hr', name: 'Croatian' },
-  { code: 'bg', name: 'Bulgarian' },
-  { code: 'lt', name: 'Lithuanian' },
-  { code: 'la', name: 'Latin' },
-  { code: 'mi', name: 'Maori' },
-  { code: 'ml', name: 'Malayalam' },
-  { code: 'cy', name: 'Welsh' },
-  { code: 'sk', name: 'Slovak' },
-  { code: 'te', name: 'Telugu' },
-  { code: 'fa', name: 'Persian' },
-  { code: 'lv', name: 'Latvian' },
-  { code: 'bn', name: 'Bengali' },
-  { code: 'sr', name: 'Serbian' },
-  { code: 'az', name: 'Azerbaijani' },
-  { code: 'sl', name: 'Slovenian' },
-  { code: 'kn', name: 'Kannada' },
-  { code: 'et', name: 'Estonian' },
-  { code: 'mk', name: 'Macedonian' },
-  { code: 'br', name: 'Breton' },
-  { code: 'eu', name: 'Basque' },
-  { code: 'is', name: 'Icelandic' },
-  { code: 'hy', name: 'Armenian' },
-  { code: 'ne', name: 'Nepali' },
-  { code: 'mn', name: 'Mongolian' },
-  { code: 'bs', name: 'Bosnian' },
-  { code: 'kk', name: 'Kazakh' },
-  { code: 'sq', name: 'Albanian' },
-  { code: 'sw', name: 'Swahili' },
-  { code: 'gl', name: 'Galician' },
-  { code: 'mr', name: 'Marathi' },
-  { code: 'pa', name: 'Punjabi' },
-  { code: 'si', name: 'Sinhala' },
-  { code: 'km', name: 'Khmer' },
-  { code: 'sn', name: 'Shona' },
-  { code: 'yo', name: 'Yoruba' },
-  { code: 'so', name: 'Somali' },
-  { code: 'af', name: 'Afrikaans' },
-  { code: 'oc', name: 'Occitan' },
-  { code: 'ka', name: 'Georgian' },
-  { code: 'be', name: 'Belarusian' },
-  { code: 'tg', name: 'Tajik' },
-  { code: 'sd', name: 'Sindhi' },
-  { code: 'gu', name: 'Gujarati' },
-  { code: 'am', name: 'Amharic' },
-  { code: 'yi', name: 'Yiddish' },
-  { code: 'lo', name: 'Lao' },
-  { code: 'uz', name: 'Uzbek' },
-  { code: 'fo', name: 'Faroese' },
-  { code: 'ht', name: 'Haitian Creole' },
-  { code: 'ps', name: 'Pashto' },
-  { code: 'tk', name: 'Turkmen' },
-  { code: 'nn', name: 'Norwegian Nynorsk' },
-  { code: 'mt', name: 'Maltese' },
-  { code: 'sa', name: 'Sanskrit' },
-  { code: 'lb', name: 'Luxembourgish' },
-  { code: 'my', name: 'Myanmar' },
-  { code: 'bo', name: 'Tibetan' },
-  { code: 'tl', name: 'Tagalog' },
-  { code: 'mg', name: 'Malagasy' },
-  { code: 'as', name: 'Assamese' },
-  { code: 'tt', name: 'Tatar' },
-  { code: 'haw', name: 'Hawaiian' },
-  { code: 'ln', name: 'Lingala' },
-  { code: 'ha', name: 'Hausa' },
-  { code: 'ba', name: 'Bashkir' },
-  { code: 'jw', name: 'Javanese' },
-  { code: 'su', name: 'Sundanese' },
+  { code: 'auto', name: '自动检测 (原始语言)' },
+  { code: 'auto-translate', name: '自动检测 (翻译为英文)' },
+  { code: 'en', name: '英语' },
+  { code: 'zh', name: '中文' },
+  { code: 'de', name: '德语' },
+  { code: 'es', name: '西班牙语' },
+  { code: 'ru', name: '俄语' },
+  { code: 'ko', name: '韩语' },
+  { code: 'fr', name: '法语' },
+  { code: 'ja', name: '日语' },
+  { code: 'pt', name: '葡萄牙语' },
+  { code: 'tr', name: '土耳其语' },
+  { code: 'pl', name: '波兰语' },
+  { code: 'ca', name: '加泰罗尼亚语' },
+  { code: 'nl', name: '荷兰语' },
+  { code: 'ar', name: '阿拉伯语' },
+  { code: 'sv', name: '瑞典语' },
+  { code: 'it', name: '意大利语' },
+  { code: 'id', name: '印度尼西亚语' },
+  { code: 'hi', name: '印地语' },
+  { code: 'fi', name: '芬兰语' },
+  { code: 'vi', name: '越南语' },
+  { code: 'he', name: '希伯来语' },
+  { code: 'uk', name: '乌克兰语' },
+  { code: 'el', name: '希腊语' },
+  { code: 'ms', name: '马来语' },
+  { code: 'cs', name: '捷克语' },
+  { code: 'ro', name: '罗马尼亚语' },
+  { code: 'da', name: '丹麦语' },
+  { code: 'hu', name: '匈牙利语' },
+  { code: 'ta', name: '泰米尔语' },
+  { code: 'no', name: '挪威语' },
+  { code: 'th', name: '泰语' },
+  { code: 'ur', name: '乌尔都语' },
+  { code: 'hr', name: '克罗地亚语' },
+  { code: 'bg', name: '保加利亚语' },
+  { code: 'lt', name: '立陶宛语' },
+  { code: 'la', name: '拉丁语' },
+  { code: 'mi', name: '毛利语' },
+  { code: 'ml', name: '马拉雅拉姆语' },
+  { code: 'cy', name: '威尔士语' },
+  { code: 'sk', name: '斯洛伐克语' },
+  { code: 'te', name: '泰卢固语' },
+  { code: 'fa', name: '波斯语' },
+  { code: 'lv', name: '拉脱维亚语' },
+  { code: 'bn', name: '孟加拉语' },
+  { code: 'sr', name: '塞尔维亚语' },
+  { code: 'az', name: '阿塞拜疆语' },
+  { code: 'sl', name: '斯洛文尼亚语' },
+  { code: 'kn', name: '卡纳达语' },
+  { code: 'et', name: '爱沙尼亚语' },
+  { code: 'mk', name: '马其顿语' },
+  { code: 'br', name: '布列塔尼语' },
+  { code: 'eu', name: '巴斯克语' },
+  { code: 'is', name: '冰岛语' },
+  { code: 'hy', name: '亚美尼亚语' },
+  { code: 'ne', name: '尼泊尔语' },
+  { code: 'mn', name: '蒙古语' },
+  { code: 'bs', name: '波斯尼亚语' },
+  { code: 'kk', name: '哈萨克语' },
+  { code: 'sq', name: '阿尔巴尼亚语' },
+  { code: 'sw', name: '斯瓦希里语' },
+  { code: 'gl', name: '加利西亚语' },
+  { code: 'mr', name: '马拉地语' },
+  { code: 'pa', name: '旁遮普语' },
+  { code: 'si', name: '僧伽罗语' },
+  { code: 'km', name: '高棉语' },
+  { code: 'sn', name: '绍纳语' },
+  { code: 'yo', name: '约鲁巴语' },
+  { code: 'so', name: '索马里语' },
+  { code: 'af', name: '南非语' },
+  { code: 'oc', name: '奥克语' },
+  { code: 'ka', name: '格鲁吉亚语' },
+  { code: 'be', name: '白俄罗斯语' },
+  { code: 'tg', name: '塔吉克语' },
+  { code: 'sd', name: '信德语' },
+  { code: 'gu', name: '古吉拉特语' },
+  { code: 'am', name: '阿姆哈拉语' },
+  { code: 'yi', name: '意第绪语' },
+  { code: 'lo', name: '老挝语' },
+  { code: 'uz', name: '乌兹别克语' },
+  { code: 'fo', name: '法罗语' },
+  { code: 'ht', name: '海地克里奥尔语' },
+  { code: 'ps', name: '普什图语' },
+  { code: 'tk', name: '土库曼语' },
+  { code: 'nn', name: '新挪威语' },
+  { code: 'mt', name: '马耳他语' },
+  { code: 'sa', name: '梵语' },
+  { code: 'lb', name: '卢森堡语' },
+  { code: 'my', name: '缅甸语' },
+  { code: 'bo', name: '藏语' },
+  { code: 'tl', name: '塔加洛语' },
+  { code: 'mg', name: '马尔加什语' },
+  { code: 'as', name: '阿萨姆语' },
+  { code: 'tt', name: '鞑靼语' },
+  { code: 'haw', name: '夏威夷语' },
+  { code: 'ln', name: '林加拉语' },
+  { code: 'ha', name: '豪萨语' },
+  { code: 'ba', name: '巴什基尔语' },
+  { code: 'jw', name: '爪哇语' },
+  { code: 'su', name: '巽他语' },
 ];
 
 interface LanguageSelectionProps {
@@ -154,12 +154,12 @@ export function LanguageSelection({
 
       // Show success toast
       const languageName = selectedLang?.name || languageCode;
-      toast.success("Language preference saved", {
-        description: `Transcription language set to ${languageName}`
+      toast.success("语言偏好已保存", {
+        description: `语音转录语言已设置为 ${languageName}`
       });
     } catch (error) {
       console.error('Failed to save language preference:', error);
-      toast.error("Failed to save language preference", {
+      toast.error("保存语言偏好失败", {
         description: error instanceof Error ? error.message : String(error)
       });
     } finally {
@@ -170,14 +170,14 @@ export function LanguageSelection({
   // Find the selected language name for display
   const selectedLanguageName = LANGUAGES.find(
     lang => lang.code === selectedLanguage
-  )?.name || 'Auto Detect (Original Language)';
+  )?.name || '自动检测 (原始语言)';
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Globe className="h-4 w-4 text-gray-600" />
-          <h4 className="text-sm font-medium text-gray-900">Transcription Language</h4>
+          <h4 className="text-sm font-medium text-gray-900">转录语言</h4>
         </div>
       </div>
 
@@ -199,31 +199,31 @@ export function LanguageSelection({
         {/* Parakeet language limitation warning */}
         {isParakeet && (
           <div className="p-2 bg-amber-50 border border-amber-200 rounded text-amber-800">
-            <p className="font-medium">ℹ️ Parakeet Language Support</p>
-            <p className="mt-1 text-xs">Parakeet currently only supports automatic language detection. Manual language selection is not available. Use Whisper if you need to specify a particular language.</p>
+            <p className="font-medium">ℹ️ Parakeet 语言支持</p>
+            <p className="mt-1 text-xs">Parakeet 目前仅支持自动语言检测。手动语言选择不可用。如果需要指定特定语言，请使用 Whisper。</p>
           </div>
         )}
 
         {/* Info text */}
         <div className="text-xs space-y-2 pt-2">
           <p className="text-gray-600">
-            <strong>Current:</strong> {selectedLanguageName}
+            <strong>当前设置:</strong> {selectedLanguageName}
           </p>
           {selectedLanguage === 'auto' && (
             <div className="p-2 bg-yellow-50 border border-yellow-200 rounded text-yellow-800">
-              <p className="font-medium">⚠️ Auto Detect may produce incorrect results</p>
-              <p className="mt-1">For best accuracy, select your specific language (e.g., English, Spanish, etc.)</p>
+              <p className="font-medium">⚠️ 自动检测可能会产生不准确的结果</p>
+              <p className="mt-1">为了获得最佳准确度，请选择您的特定语言（例如：中文、英语等）</p>
             </div>
           )}
           {selectedLanguage === 'auto-translate' && (
             <div className="p-2 bg-blue-50 border border-blue-200 rounded text-blue-800">
-              <p className="font-medium">🌐 Translation Mode Active</p>
-              <p className="mt-1">All audio will be automatically translated to English. Best for multilingual meetings where you need English output.</p>
+              <p className="font-medium">🌐 翻译模式已启用</p>
+              <p className="mt-1">所有音频将自动翻译为英文。最适合您需要英文输出的多语言会议。</p>
             </div>
           )}
           {selectedLanguage !== 'auto' && selectedLanguage !== 'auto-translate' && (
             <p className="text-gray-600">
-              Transcription will be optimized for <strong>{selectedLanguageName}</strong>
+              转录将针对 <strong>{selectedLanguageName}</strong> 进行优化
             </p>
           )}
         </div>

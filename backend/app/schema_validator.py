@@ -35,7 +35,9 @@ class SchemaValidator:
                 ('id', 'TEXT', 'PRIMARY KEY'),
                 ('title', 'TEXT', 'NOT NULL'),
                 ('created_at', 'TEXT', 'NOT NULL'),
-                ('updated_at', 'TEXT', 'NOT NULL')
+                ('updated_at', 'TEXT', 'NOT NULL'),
+                ('folder_path', 'TEXT', ''),
+                ('real_time_summary', 'TEXT', '')
             ],
             'transcripts': [
                 ('id', 'TEXT', 'PRIMARY KEY'),

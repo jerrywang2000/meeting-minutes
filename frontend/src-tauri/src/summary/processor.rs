@@ -172,6 +172,7 @@ pub async fn generate_meeting_summary(
     top_p: Option<f32>,
     app_data_dir: Option<&PathBuf>,
     cancellation_token: Option<&CancellationToken>,
+    real_time_summary: Option<String>,
 ) -> Result<(String, i64), String> {
     // Check cancellation at the start
     if let Some(token) = cancellation_token {
@@ -323,6 +324,8 @@ pub async fn generate_meeting_summary(
 4. If a section has no relevant info, write "None noted in this section."
 5. Output **only** the completed Markdown report.
 6. If unsure about something, omit it.
+7. **IMPORTANT: The entire report MUST be written in Chinese (简体中文).**
+8. **Reconcile with Real-time Summary:** If `<real_time_summary>` is provided, it is a JSON object containing preliminary notes and action items. Use the "Action Items" (ImmediateActionItems) within it as a primary reference to identify and validate tasks for the final "**行动项**" section. Cross-reference these with the `<transcript_chunks>` to ensure they were actually discussed and are accurately captured.
 
 **SECTION-SPECIFIC INSTRUCTIONS:**
 {}
@@ -342,6 +345,12 @@ pub async fn generate_meeting_summary(
 "#,
         content_to_summarize
     );
+
+    if let Some(rt_summary) = real_time_summary {
+        final_user_prompt.push_str("\n\n<real_time_summary>\n");
+        final_user_prompt.push_str(&rt_summary);
+        final_user_prompt.push_str("\n</real_time_summary>");
+    }
 
     if !custom_prompt.is_empty() {
         final_user_prompt.push_str("\n\nUser Provided Context:\n\n<user_context>\n");

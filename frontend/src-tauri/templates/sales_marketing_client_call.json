@@ -1,44 +1,44 @@
 {
-      "name": "Client / Sales Meeting",
-      "description": "Capture client goals, deliverables, and next steps.",
-      "sections": [
-        {
-          "title": "Meeting Metadata",
-          "instruction": "Date, time, location/modality, account manager",
-          "format": "string"
-        },
-        {
-          "title": "Attendees",
-          "instruction": "Client and vendor attendees with roles",
-          "format": "list"
-        },
-        {
-          "title": "Client Goals & Success Criteria",
-          "instruction": "What the client wants to achieve and how success will be measured",
-          "format": "paragraph"
-        },
-        {
-          "title": "Agreed Deliverables",
-          "instruction": "Deliverables, owners, and due dates",
-          "format": "list",
-          "item_format": "| **Deliverable** | **Owner** | **Due Date** |\n| --- | --- | --- |"
-        },
-        {
-          "title": "Commercial Terms Discussed",
-          "instruction": "Pricing, SLAs, payment terms or contract items discussed",
-          "format": "paragraph"
-        },
-        {
-          "title": "Risks & Concerns",
-          "instruction": "Client concerns, blockers, or escalation items",
-          "format": "list",
-          "item_format": "| **Concern** | **Impact** | **Owner** |\n| --- | --- | --- |"
-        },
-        {
-          "title": "Next Steps",
-          "instruction": "Actions, owners, and due dates",
-          "format": "list",
-          "item_format": "| **Owner** | **Action** | **Due Date** |\n| --- | --- | --- |"
-        }
-      ]
+  "name": "销售与客户通话",
+  "description": "侧重于客户需求、痛点和后续销售机会的模板。",
+  "sections": [
+    {
+      "title": "会议元数据",
+      "instruction": "日期、时间、地点/形式、客户经理",
+      "format": "string"
+    },
+    {
+      "title": "与会者",
+      "instruction": "客户方和己方参会人员及其角色",
+      "format": "list"
+    },
+    {
+      "title": "客户目标与成功标准",
+      "instruction": "客户希望实现的目标以及如何衡量成功",
+      "format": "paragraph"
+    },
+    {
+      "title": "约定交付物",
+      "instruction": "交付物、负责人和截止日期",
+      "format": "list",
+      "item_format": "| **交付物** | **负责人** | **截止日期** |\n| --- | --- | --- |"
+    },
+    {
+      "title": "商务条款讨论",
+      "instruction": "讨论的价格、SLA、付款条件或合同项",
+      "format": "paragraph"
+    },
+    {
+      "title": "风险与担忧",
+      "instruction": "客户的疑虑、阻碍因素或需要升级处理的事项",
+      "format": "list",
+      "item_format": "| **疑虑** | **影响** | **负责人** |\n| --- | --- | --- |"
+    },
+    {
+      "title": "后续步骤",
+      "instruction": "行动、负责人和截止日期",
+      "format": "list",
+      "item_format": "| **负责人** | **行动** | **截止日期** |\n| --- | --- | --- |"
     }
+  ]
+}

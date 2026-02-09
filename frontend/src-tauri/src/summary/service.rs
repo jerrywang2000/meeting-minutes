@@ -219,6 +219,12 @@ impl SummaryService {
         // Get app data directory for BuiltInAI provider
         let app_data_dir = _app.path().app_data_dir().ok();
 
+        // Fetch real_time_summary from database to help with correlation
+        let real_time_summary = match MeetingsRepository::get_meeting_metadata(&pool, &meeting_id).await {
+            Ok(Some(meeting)) => meeting.real_time_summary,
+            _ => None,
+        };
+
         // Generate summary
         let client = reqwest::Client::new();
         let result = generate_meeting_summary(
@@ -237,6 +243,7 @@ impl SummaryService {
             custom_openai_top_p,
             app_data_dir.as_ref(),
             Some(&cancellation_token),
+            real_time_summary,
         )
         .await;
 

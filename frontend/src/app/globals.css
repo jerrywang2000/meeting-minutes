@@ -180,6 +180,15 @@
     scrollbar-color: #d1d5db transparent;
   }
 
+  /* Hide scrollbar utility */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
   /* BlockNote Editor - Override fixed dimensions for responsive layout */
   .bn-container {
     width: 100% !important;
