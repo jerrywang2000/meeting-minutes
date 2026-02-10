@@ -369,9 +369,10 @@ export const TranscriptView: React.FC<TranscriptViewProps> = ({ transcripts, isR
               </p>
             </>
           ) : (
-            <>
-              <p className="text-lg font-semibold">欢迎使用 100% 智能会议助手！</p>
-              <p className="text-xs mt-1">开始录制以查看实时转录</p>            </>
+                                    <>
+                                        <p className="text-lg font-semibold">欢迎使用 Syncnergy 智能会议助手！</p>
+                                        <p className="text-xs mt-1">开始录制以查看实时转录</p>
+                                    </>
           )}
         </motion.div>
       )}

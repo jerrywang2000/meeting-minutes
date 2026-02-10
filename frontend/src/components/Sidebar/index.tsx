@@ -519,7 +519,7 @@ const Sidebar: React.FC = () => {
             </TooltipContent>
           </Tooltip>
 
-          <Info isCollapsed={isCollapsed} />
+
         </div>
       </TooltipProvider>
     );
@@ -769,7 +769,7 @@ const Sidebar: React.FC = () => {
               <Settings className="w-4 h-4 mr-2" />
               <span>设置</span>
             </button>
-            <Info isCollapsed={isCollapsed} />
+  
             <div className="w-full flex items-center justify-center px-3 py-1 text-xs text-gray-400">
               v0.2.0
             </div>
