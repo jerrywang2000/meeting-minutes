@@ -113,8 +113,8 @@ class IncrementalSummarizer:
             logger.error(f"Failed to initialize LLM: {str(e)}", exc_info=True)
             raise
 
-    async def add_transcript_chunk(self, new_text_chunk: str, chunk_size_threshold: int = 50) -> SummaryResponse:
-        logger.debug(f"Received new chunk: '{new_text_chunk}'")
+    async def add_transcript_chunk(self, new_text_chunk: str, chunk_size_threshold: int = 150) -> SummaryResponse:
+        logger.debug(f"Received new chunk: '{new_text_chunk}'， ")
         if not self.is_initialized:
             raise RuntimeError("Summarizer is not initialized. Call `await .initialize()` first.")
 
